@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { getDatabase, ref, set, get, push, child, update } from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA4SMJNYfXPKdm1Iv1kuHcjmb1RStMIJGo",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
   authDomain: "cybercbit.firebaseapp.com",
   databaseURL: "https://cybercbit-default-rtdb.firebaseio.com",
   projectId: "cybercbit",

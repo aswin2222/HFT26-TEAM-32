@@ -1,4 +1,4 @@
-const FEATHERLESS_API_KEY = process.env.FEATHERLESS_API_KEY || 'rc_560a4ebacdd0bf4982f95a2d64ed97f45bf635659cab12bc8668e943f31e07d8';
+const FEATHERLESS_API_KEY = process.env.FEATHERLESS_API_KEY || '';
 const FEATHERLESS_MODEL = process.env.FEATHERLESS_MODEL_GENERATOR || 'deepseek-ai/DeepSeek-V4-Pro';
 
 export async function callFeatherless(prompt: string, maxTokens = 2500): Promise<string> {

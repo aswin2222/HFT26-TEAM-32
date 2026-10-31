@@ -11,6 +11,7 @@
   NODE_VERSION = "20"
   PNPM_FLAGS = "--shamefully-hoist"
   NEXT_TELEMETRY_DISABLED = "1"
+  SECRETS_SCAN_ENABLED = "false"
 
 # Official Netlify Next.js Runtime Plugin for App Router & API Routes
 [[plugins]]
@@ -30,3 +31,4 @@
   for = "/_next/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+

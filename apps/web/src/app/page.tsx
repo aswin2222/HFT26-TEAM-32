@@ -204,21 +204,20 @@ export default function HomePage() {
           loop
           muted
           playsInline
-          className="w-full h-full object-cover opacity-50 scale-105 filter saturate-150 contrast-110"
+          className="w-full h-full object-cover opacity-85 scale-100 filter saturate-125"
         >
           <source
             src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260815_034306_165449ef-7d2e-4e81-850f-1939c5cb442d.mp4"
             type="video/mp4"
           />
         </video>
-        {/* Layered Cyber Color Palette Overlays (Deep Cosmic Obsidian + Cyan + Violet Neon) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050716]/85 via-[#070b24]/80 to-[#040612]/95" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,_rgba(6,182,212,0.22),_rgba(139,92,246,0.15)_45%,_transparent_75%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#050716_0%,transparent_20%,transparent_80%,#050716_100%)] opacity-70" />
+        {/* Transparent Cinematic Vignette — keeping the background video animation vividly visible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_45%,_rgba(4,6,18,0.65)_100%)]" />
       </div>
 
       {/* Top Navbar */}
-      <header className="border-b border-cyan-500/20 backdrop-blur-xl bg-[#06081a]/70 sticky top-0 z-40">
+      <header className="border-b border-cyan-500/20 backdrop-blur-md bg-[#05081c]/50 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 via-blue-500 to-purple-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.5)]">
@@ -272,7 +271,7 @@ export default function HomePage() {
         {/* Upload & Biometric Intake Form */}
         <form
           onSubmit={handleUpload}
-          className="backdrop-blur-2xl bg-[#090d29]/75 border border-cyan-500/25 rounded-3xl p-7 md:p-9 shadow-[0_0_60px_-15px_rgba(6,182,212,0.25)] space-y-7"
+          className="backdrop-blur-xl bg-[#060a24]/50 border border-cyan-500/30 rounded-3xl p-7 md:p-9 shadow-[0_0_60px_-15px_rgba(6,182,212,0.25)] space-y-7"
         >
           {/* STEP 1: RESUME UPLOAD */}
           <div>

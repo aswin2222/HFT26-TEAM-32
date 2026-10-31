@@ -58,7 +58,7 @@ export class FeatherlessClient {
   private concurrencyLimiter: Semaphore;
 
   constructor() {
-    this.apiKey = process.env.FEATHERLESS_API_KEY || 'rc_560a4ebacdd0bf4982f95a2d64ed97f45bf635659cab12bc8668e943f31e07d8';
+    this.apiKey = process.env.FEATHERLESS_API_KEY || '';
     this.baseUrl = (process.env.FEATHERLESS_BASE_URL || 'https://api.featherless.ai/v1').replace(/\/+$/, '');
     this.defaultGeneratorModel = process.env.FEATHERLESS_MODEL_GENERATOR || 'deepseek-ai/DeepSeek-V4-Pro';
     this.defaultAssistantModel = process.env.FEATHERLESS_MODEL_ASSISTANT || 'deepseek-ai/DeepSeek-V4-Pro';
