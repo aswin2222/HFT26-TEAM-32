@@ -68,6 +68,7 @@ export default function AssessmentWorkspacePage() {
   const [runningTests, setRunningTests] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
   const [activeBottomTab, setActiveBottomTab] = useState<'tests' | 'console'>('tests');
+  const [challengeScores, setChallengeScores] = useState<Record<string, { passedTests: number; totalTests: number }>>({});
 
   // Guarded AI Assistant State
   const [assistantMessages, setAssistantMessages] = useState<AssistantMessage[]>([]);
@@ -230,6 +231,15 @@ export default function AssessmentWorkspacePage() {
       });
       const data = await res.json();
       setTestResults(data);
+      if (data.success) {
+        setChallengeScores((prev) => ({
+          ...prev,
+          [currentChallenge.id]: {
+            passedTests: data.passedTests || 0,
+            totalTests: data.totalTests || currentChallenge.tests?.length || 4,
+          },
+        }));
+      }
     } catch (err: any) {
       setTestResults({
         success: false,
@@ -296,46 +306,109 @@ export default function AssessmentWorkspacePage() {
     }
   };
 
-  // Final Assessment Submission & Deterministic Grading
+  // Helper to dynamically evaluate challenge tests on submit
+  const evaluateChallengeTests = async (ch: TierChallenge): Promise<{ passedTests: number; totalTests: number }> => {
+    try {
+      const activeFiles = ch.files.map((f) => ({
+        path: f.path,
+        content: fileContents[ch.id]?.[f.path] || f.content,
+      }));
+      const res = await fetch('/api/run-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: ch.tier,
+          files: activeFiles,
+          testCases: ch.tests,
+        }),
+      });
+      const data = await res.json();
+      return {
+        passedTests: data.passedTests || 0,
+        totalTests: data.totalTests || ch.tests?.length || 4,
+      };
+    } catch {
+      return { passedTests: 0, totalTests: ch.tests?.length || 4 };
+    }
+  };
+
+  // Final Assessment Submission & 100% Dynamic User-Answer-Based Grading
   const handleSubmitAssessment = async () => {
     if (submitting || submitted) return;
     setSubmitting(true);
 
-    // 1. Grade MCQs (Phase 1)
+    // 1. Grade Phase 1 MCQs dynamically
     let mcqCorrect = 0;
     for (const q of questions) {
       const userAns = mcqAnswers[String(q.id)];
-      if (userAns && userAns === q.correctAnswer) {
+      if (userAns && q.correctAnswer && userAns.trim().toUpperCase() === q.correctAnswer.trim().toUpperCase()) {
         mcqCorrect++;
       }
     }
-    const mcqPercentage = questions.length > 0 ? Math.round((mcqCorrect / questions.length) * 100) : 85;
+    const totalMcqs = questions.length || 20;
+    const mcqPercentage = totalMcqs > 0 ? Math.round((mcqCorrect / totalMcqs) * 100) : 0;
+    // Phase 1 contributes 30 points to the total score
+    const mcqPoints = Math.round((mcqCorrect / totalMcqs) * 30);
 
-    // 2. Score Coding Correctness (50%) + DSA Performance (30%) + AI Efficiency (20%)
-    const codingScore = 45; // 45/50
-    const dsaScore = 28;    // 28/30
-    const aiEfficiency = Math.max(14, 20 - Math.max(0, hintCount - 3) * 2);
-    const totalScore = Math.round((mcqPercentage * 0.2) + (codingScore * 0.5) + (dsaScore * 0.3));
+    // 2. Grade Phase 2 (Adept) and Phase 3 (Master) Coding Challenges dynamically
+    const p2Challenge = challenges.find((c) => c.tier === 'adept') || challenges[0];
+    const p3Challenge = challenges.find((c) => c.tier === 'master') || challenges[1] || challenges[0];
+
+    let p2Result = challengeScores[p2Challenge?.id];
+    let p3Result = challengeScores[p3Challenge?.id];
+
+    // If candidate edited code but didn't click "Run Tests", evaluate now
+    if (!p2Result && p2Challenge) {
+      p2Result = await evaluateChallengeTests(p2Challenge);
+    }
+    if (!p3Result && p3Challenge) {
+      p3Result = await evaluateChallengeTests(p3Challenge);
+    }
+
+    const p2Passed = p2Result?.passedTests || 0;
+    const p2Total = p2Result?.totalTests || 4;
+    const p3Passed = p3Result?.passedTests || 0;
+    const p3Total = p3Result?.totalTests || 4;
+
+    // Phase 2 Adept is worth 25 points; Phase 3 Master is worth 25 points (Total 50 points)
+    const phase2Score = Math.round((p2Passed / p2Total) * 25);
+    const phase3Score = Math.round((p3Passed / p3Total) * 25);
+    const totalCodingScore = phase2Score + phase3Score;
+
+    // AI Efficiency: starts at 20 points, decreases if candidate asked multiple hints
+    const aiEfficiency = Math.max(0, 20 - (hintCount * 3));
+
+    // Dynamic Total Score strictly calculated from the candidate's actual performance
+    const totalScore = Math.min(100, mcqPoints + totalCodingScore + aiEfficiency);
 
     const report = {
       candidateName,
       candidateId,
-      totalScore: Math.min(100, totalScore + aiEfficiency),
-      mcqResult: `${mcqCorrect} / ${questions.length} (${mcqPercentage}%)`,
-      codingCorrectness: `${codingScore} / 50`,
-      dsaPerformance: `${dsaScore} / 30`,
+      totalScore,
+      mcqResult: `${mcqCorrect} / ${totalMcqs} (${mcqPercentage}%)`,
+      codingCorrectness: `${totalCodingScore} / 50 (${p2Passed + p3Passed}/${p2Total + p3Total} tests)`,
+      dsaPerformance: `${Math.round((p3Passed / p3Total) * 30)} / 30`,
       aiEfficiency: `${aiEfficiency} / 20`,
       hintsRequested: hintCount,
-      timeTakenMinutes: Math.round((3600 - timeLeft) / 60),
+      timeTakenMinutes: Math.max(1, Math.round((3600 - timeLeft) / 60)),
       dsaBoundaries,
       tierResults: {
-        phase1: { title: 'Phase 1: MCQs & Project Questions', status: `${mcqCorrect}/${questions.length} Correct` },
-        phase2: { title: 'Phase 2: Adept Multi-Step Feature', status: 'Passed (4/4 tests)' },
-        phase3: { title: 'Phase 3: Master Performance Engine', status: 'Passed (4/4 tests)' },
+        phase1: {
+          title: 'Phase 1: MCQs & Project Questions',
+          status: `${mcqCorrect}/${totalMcqs} Correct (${mcqPercentage}% - ${mcqPoints}/30 pts)`,
+        },
+        phase2: {
+          title: 'Phase 2: Adept Multi-Step Feature',
+          status: `${p2Passed}/${p2Total} tests passed (${phase2Score}/25 pts)`,
+        },
+        phase3: {
+          title: 'Phase 3: Master Performance Engine',
+          status: `${p3Passed}/${p3Total} tests passed (${phase3Score}/25 pts)`,
+        },
       },
     };
 
-    // Save final scores to Firebase
+    // Save dynamic scores to Firebase
     try {
       await fetch('/api/submit-exam', {
         method: 'POST',

@@ -125,3 +125,37 @@ export async function extractPhotoFromResumeFile(file: File): Promise<string | n
   return null;
 }
 
+
+/**
+ * Extract full readable text from an uploaded PDF resume on the client side using PDF.js
+ */
+export async function extractTextFromPdfClient(file: File): Promise<string> {
+  if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+    return '';
+  }
+
+  try {
+    const pdfjs = await loadPdfJs();
+    if (!pdfjs) return '';
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+    const pagesToScan = Math.min(pdf.numPages, 5);
+
+    for (let pageNum = 1; pageNum <= pagesToScan; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str || '')
+        .join(' ');
+      fullText += pageText + '\n';
+    }
+
+    return fullText.trim();
+  } catch (err) {
+    console.warn('[PDF Client] Text extraction notice:', err);
+    return '';
+  }
+}

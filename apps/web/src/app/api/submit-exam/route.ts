@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const scores = gradeAnswers(questionsArray, answers);
 
     // Save to Firebase
-    await firebaseDb.saveCandidateAnswers(candidateId, answers, scores);
+    await firebaseDb.saveCandidateAnswers(candidateId, answers, scores, body.report);
 
     return NextResponse.json({
       success: true,

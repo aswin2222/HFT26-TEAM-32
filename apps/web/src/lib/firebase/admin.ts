@@ -91,10 +91,11 @@ export const firebaseDb = {
     return fbPut(`candidates/${candidateId}/questions`, questions);
   },
 
-  async saveCandidateAnswers(candidateId: string, answers: any, scores: any) {
+  async saveCandidateAnswers(candidateId: string, answers: any, scores: any, report?: any) {
     return fbPatch(`candidates/${candidateId}`, {
       answers,
       scores,
+      ...(report ? { report } : {}),
       status: 'completed',
       completedAt: Date.now(),
     });

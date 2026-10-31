@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { extractPhotoFromResumeFile } from '@/lib/face/resume-parser';
+import { extractPhotoFromResumeFile, extractTextFromPdfClient } from '@/lib/face/resume-parser';
 
 export default function HomePage() {
   const router = useRouter();
@@ -137,6 +137,20 @@ export default function HomePage() {
           return;
         }
         formData.append('file', file);
+
+        // Pre-extract PDF text in client to guarantee Netlify serverless never fails
+        if (file.name.endsWith('.pdf') || file.type === 'application/pdf') {
+          setStatus('📄 Reading resume text directly in browser...');
+          try {
+            const clientExtractedText = await extractTextFromPdfClient(file);
+            if (clientExtractedText && clientExtractedText.length > 20) {
+              console.log('[Home] Client extracted PDF text length:', clientExtractedText.length);
+              formData.append('extractedText', clientExtractedText);
+            }
+          } catch (e) {
+            console.warn('[Home] Client PDF extraction notice:', e);
+          }
+        }
       } else if (uploadMethod === 'text') {
         if (!textInput.trim()) {
           setError('Please paste your resume text');
